@@ -1,6 +1,9 @@
 from treys import Deck, Card
 from rich.console import Console
 from rich.table import Table
+from bots.Outlaw import Outlaw
+from bots.Mirage import Mirage
+from bots.Coyote import Coyote
 
 console = Console()
 
@@ -9,9 +12,9 @@ def display_hands(players):
     table.add_column("Player", style="cyan")
     table.add_column("Cards", style="magenta")
 
-    for i, hand in enumerate(players):
-        cards_str = " ".join([Card.int_to_pretty_str(c) for c in hand])
-        table.add_row(f"Player {i+1}", cards_str)
+    for i, player in enumerate(players):
+        cards_str = " ".join([Card.int_to_pretty_str(c) for c in player.hand])
+        table.add_row(f"{player.name}", cards_str)
     console.print(table)
 
 def display_community(community):
@@ -24,7 +27,9 @@ def display_community(community):
 def texas_holdem_sim(num_players=4):
     while True:
         deck = Deck()
-        players = [[deck.draw(1)[0], deck.draw(1)[0]] for _ in range(num_players)]
+        players = [Outlaw(), Mirage(), Coyote()]
+        for bot in players:
+            bot.receive_cards([deck.draw(1)[0], deck.draw(1)[0]])
 
         # Show hole cards
         console.rule("[bold yellow]Hole Cards[/bold yellow]")
