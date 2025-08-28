@@ -55,66 +55,38 @@ class PokerGameEngine:
         """Evaluate final hands after the river (5 community cards)."""
         return self.evaluate_with_community(players, community_cards)
     
-    def get_winning_percentage(self, players, community_cards, simulations=1000) -> Dict[str, float]:
+    def get_subjective_evaluations(self, players, community_cards) -> List[Tuple[str, int, str]]:
         """
-        Calculate subjective win percentages based on each bot's own hand evaluation.
-        Percentages may not sum to 100% as they reflect individual bot psychology.
+        Get subjective hand evaluations from each bot's perspective.
+        Returns list of (player_name, hand_strength, hand_description) sorted by strength.
+        """
+        player_evaluations = []
+        
+        for player in players:
+            strength, description = player.evaluate_hand(community_cards)
+            player_evaluations.append((player.name, strength, description))
+        
+        # Sort by strength (lower = better)
+        return sorted(player_evaluations, key=lambda x: x[1])
+    
+    def get_subjective_percentages(self, players, community_cards) -> Dict[str, float]:
+        """
+        Get subjective win percentages from each bot's perspective.
+        These may not sum to 100% as they reflect individual bot psychology.
         """
         percentages = {}
         
-        if len(community_cards) == 0:
-            # Preflop: Use each bot's preflop evaluation
-            for player in players:
-                strength, _ = player.evaluate_preflop()
-                # Convert strength to percentage (lower strength = higher confidence)
-                # Scale from 0-100% based on strength relative to possible range
-                max_strength = 1800  # Worst possible hand strength
-                min_strength = 0     # Best possible hand strength
-                
-                # Normalize to 0-100 range, then invert (lower strength = higher %)
-                normalized = (max_strength - strength) / max_strength
-                percentage = max(5, min(95, normalized * 100))  # Keep between 5-95%
-                percentages[player.name] = round(percentage, 1)
-        
-        else:
-            # Post-flop: Use actual hand evaluation with subjective adjustment
-            for player in players:
-                # Get objective hand strength
-                hand_rank = self.evaluator.evaluate(player.hand, community_cards)
-                
-                # Apply subjective multiplier based on bot's preflop confidence
-                preflop_strength, _ = player.evaluate_preflop()
-                
-                # Calculate confidence multiplier (how optimistic/pessimistic each bot is)
-                if hasattr(player, 'name'):
-                    if player.name == "Coyote":
-                        confidence_multiplier = 0.8  # Conservative, underestimates chances
-                    elif player.name == "Mirage":
-                        confidence_multiplier = 1.3  # Aggressive, overestimates chances
-                    elif player.name == "Outlaw":
-                        import random
-                        confidence_multiplier = random.uniform(0.5, 1.8)  # Unpredictable
-                    else:
-                        confidence_multiplier = 1.0  # Neutral
-                else:
-                    confidence_multiplier = 1.0
-                
-                # Convert hand rank to percentage (7462 is worst possible)
-                base_percentage = ((7462 - hand_rank) / 7462) * 100
-                
-                # Apply subjective adjustment
-                subjective_percentage = base_percentage * confidence_multiplier
-                
-                # Keep in reasonable bounds
-                percentage = max(1, min(99, subjective_percentage))
-                percentages[player.name] = round(percentage, 1)
+        for player in players:
+            percentage = player.get_win_percentage(community_cards)
+            percentages[player.name] = percentage
         
         return percentages
     
-    def get_detailed_simulation(self, players, community_cards, simulations=10000) -> Dict:
+    def get_monte_carlo_percentage(self, players, community_cards, simulations=1000) -> Dict[str, float]:
         """
-        Run a more detailed Monte Carlo simulation with additional statistics.
-        Returns win percentages, tie information, and hand frequency analysis.
+        Calculate objective win percentages using Monte Carlo simulation.
+        Simulates unknown cards and counts wins for each player.
+        Percentages will sum to 100%.
         """
         from treys import Deck
         import random
@@ -133,58 +105,34 @@ class PokerGameEngine:
         cards_needed = 5 - len(community_cards)
         
         wins = {player.name: 0 for player in players}
-        hand_types = {player.name: {} for player in players}
-        total_ties = 0
         
         for _ in range(simulations):
             # Shuffle unknown cards and complete the board
             random.shuffle(unknown_cards)
             simulated_community = community_cards + unknown_cards[:cards_needed]
             
-            # Evaluate all hands and track hand types
+            # Evaluate all hands
             hand_scores = []
             for player in players:
                 score = self.evaluator.evaluate(player.hand, simulated_community)
-                hand_class = self.evaluator.get_rank_class(score)
-                hand_name = self.evaluator.class_to_string(hand_class)
-                
-                # Track hand type frequency
-                if hand_name not in hand_types[player.name]:
-                    hand_types[player.name][hand_name] = 0
-                hand_types[player.name][hand_name] += 1
-                
                 hand_scores.append((player.name, score))
             
-            # Find winner(s)
+            # Find winner(s) - lower score is better in treys
             best_score = min(hand_scores, key=lambda x: x[1])[1]
             winners = [name for name, score in hand_scores if score == best_score]
             
             if len(winners) == 1:
                 wins[winners[0]] += 1
             else:
-                total_ties += 1
+                # Handle ties by giving fractional wins
                 tie_value = 1.0 / len(winners)
                 for winner in winners:
                     wins[winner] += tie_value
         
         # Convert to percentages
-        win_percentages = {}
+        percentages = {}
         for player_name, win_count in wins.items():
             percentage = (win_count / simulations) * 100
-            win_percentages[player_name] = round(percentage, 1)
+            percentages[player_name] = round(percentage, 1)
         
-        # Convert hand frequencies to percentages
-        hand_frequencies = {}
-        for player_name, hands in hand_types.items():
-            hand_frequencies[player_name] = {}
-            for hand_name, count in hands.items():
-                percentage = (count / simulations) * 100
-                hand_frequencies[player_name][hand_name] = round(percentage, 1)
-        
-        return {
-            'win_percentages': win_percentages,
-            'hand_frequencies': hand_frequencies,
-            'total_simulations': simulations,
-            'total_ties': total_ties,
-            'tie_percentage': round((total_ties / simulations) * 100, 1)
-        }
+        return percentages

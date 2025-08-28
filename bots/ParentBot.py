@@ -1,4 +1,5 @@
-from unittest import case
+from treys import Card
+from typing import Tuple, List
 
 
 class ParentBot:
@@ -26,56 +27,31 @@ class ParentBot:
         """
         raise NotImplementedError("This bot has no decision logic yet.")
 
-    def evaluate_hand(self, community) -> tuple:
+    def evaluate_hand(self, community_cards) -> Tuple[int, str]:
         """
-        Evaluate hand strength and return (strength, description).
-        Lower strength values indicate better hands (consistent with treys).
-        Override this method to implement custom hand evaluation.
+        Evaluate current hand strength with community cards.
+        Returns (strength, description) where lower strength = better hand.
+        Must be implemented by each bot.
         """
-        from treys import Card
-        
-        if len(self.hand) != 2:
-            return (9999, "No cards")
-        
-        match len(community):
-                case 0:
-                    # Preflop: Only evaluate hole cards
+        raise NotImplementedError("Each bot must implement their own hand evaluation logic.")
 
-                    return (strength, description)
-                case 3:
-                    # Flop: Evaluate with 3 community cards
-
-                    return (strength, description)
-                case 4:
-                    # Turn: Evaluate with 4 community cards
-
-                    return (strength, description)
-                case 5:
-                    # River: Evaluate with 5 community cards
-                    
-                    return (strength, description)
-
-        # Simple high card evaluation for preflop
-        card1_rank = Card.get_rank_int(self.hand[0])
-        card2_rank = Card.get_rank_int(self.hand[1])
-        
-        # Calculate base strength (higher = stronger)
-        if card1_rank == card2_rank:
-            strength = card1_rank * 100  # Pairs get big bonus
-        elif Card.get_suit_int(self.hand[0]) == Card.get_suit_int(self.hand[1]):
-            strength = (card1_rank + card2_rank) * 10  # Suited gets bonus
-        else:
-            strength = card1_rank + card2_rank  # Regular high card
-        
-        # Generate description
-        description = self._describe_hole_cards()
-        
-        return (strength, description)
+    def evaluate_preflop(self) -> Tuple[int, str]:
+        """
+        Evaluate preflop hand strength and return (strength, description).
+        Lower strength values indicate better hands.
+        Must be implemented by each bot.
+        """
+        raise NotImplementedError("Each bot must implement their own preflop evaluation logic.")
     
+    def get_win_percentage(self, community_cards) -> float:
+        """
+        Calculate subjective win percentage based on bot's own evaluation.
+        Must be implemented by each bot.
+        """
+        raise NotImplementedError("Each bot must implement their own win percentage calculation.")
+
     def _describe_hole_cards(self) -> str:
-        """Describe hole cards for preflop analysis."""
-        from treys import Card
-        
+        """Describe hole cards for preflop analysis using treys Card class."""
         if len(self.hand) != 2:
             return "No cards"
             

@@ -118,9 +118,10 @@ class GameDisplay:
         console.print(table)
     
     @staticmethod
-    def display_hand_rankings(rankings: List[Tuple[str, int, str]], stage_name="Hand Rankings"):
+    def display_hand_rankings(rankings: List[Tuple[str, int, str]], title: str = "", stage_name="Hand Rankings"):
         """Display player rankings with hand strength."""
         table = Table(
+            title=f"[bold green]{title}[/bold green]",
             show_header=True,
             header_style="bold green",
             border_style="bright_green",
@@ -148,9 +149,10 @@ class GameDisplay:
         console.print(table)
     
     @staticmethod
-    def display_winning_percentages(percentages: dict):
+    def display_winning_percentages(percentages: dict, title: str = "Winning Chances"):
         """Display winning percentages for each player."""
         table = Table(
+            title=f"[bold bright_magenta]{title}[/bold bright_magenta]",
             show_header=True,
             header_style="bold bright_magenta",
             border_style="bright_magenta",
