@@ -59,23 +59,24 @@ class PokerGameEngine:
     
     def _evaluate_hole_cards(self, hole_cards) -> int:
         """
-        Simple preflop evaluation. You can enhance this with proper preflop rankings.
-        For now, just return high card value.
+        Simple preflop evaluation that matches treys' convention (lower = better).
         """
         # Simple high card evaluation for preflop
         card1_rank = Card.get_rank_int(hole_cards[0])
         card2_rank = Card.get_rank_int(hole_cards[1])
         
-        # Pair bonus
+        # Calculate base strength (higher = stronger)
         if card1_rank == card2_rank:
-            return card1_rank * 100  # Pairs get big bonus
+            base_strength = card1_rank * 100  # Pairs get big bonus
+        elif Card.get_suit_int(hole_cards[0]) == Card.get_suit_int(hole_cards[1]):
+            base_strength = (card1_rank + card2_rank) * 10  # Suited gets bonus
+        else:
+            base_strength = card1_rank + card2_rank  # Regular high card
         
-        # Suited bonus
-        if Card.get_suit_int(hole_cards[0]) == Card.get_suit_int(hole_cards[1]):
-            return (card1_rank + card2_rank) * 10  # Suited gets bonus
-        
-        # Regular high card
-        return card1_rank + card2_rank
+        # Invert to match treys convention (lower = better)
+        # Use a large number minus the strength so better hands get lower scores
+        max_possible = 12 * 100  # Pocket Aces would be 12 * 100 = 1200
+        return max_possible - base_strength
     
     def _describe_hole_cards(self, hole_cards) -> str:
         """Describe hole cards for preflop analysis."""
