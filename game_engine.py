@@ -8,21 +8,7 @@ class PokerGameEngine:
     
     def __init__(self):
         self.evaluator = Evaluator()
-    
-    def evaluate_preflop(self, players) -> List[Tuple[str, int, str]]:
-        """
-        Evaluate hole cards strength for all players using each bot's own evaluation.
-        Returns list of (player_name, hand_strength, hand_description) sorted by strength.
-        """
-        player_strengths = []
-        
-        for player in players:
-            # Use each player's own preflop evaluation method
-            strength, description = player.evaluate_preflop()
-            player_strengths.append((player.name, strength, description))
-        
-        # Sort by strength (lower score = better hand in treys convention)
-        return sorted(player_strengths, key=lambda x: x[1])
+
     
     def evaluate_with_community(self, players, community_cards) -> List[Tuple[str, int, str]]:
         """
@@ -42,18 +28,6 @@ class PokerGameEngine:
         
         # Sort by hand rank (lower = better in treys)
         return sorted(player_hands, key=lambda x: x[1])
-    
-    def evaluate_flop(self, players, flop_cards) -> List[Tuple[str, int, str]]:
-        """Evaluate hands after the flop (3 community cards)."""
-        return self.evaluate_with_community(players, flop_cards)
-    
-    def evaluate_turn(self, players, community_cards) -> List[Tuple[str, int, str]]:
-        """Evaluate hands after the turn (4 community cards)."""
-        return self.evaluate_with_community(players, community_cards)
-    
-    def evaluate_river(self, players, community_cards) -> List[Tuple[str, int, str]]:
-        """Evaluate final hands after the river (5 community cards)."""
-        return self.evaluate_with_community(players, community_cards)
     
     def get_subjective_evaluations(self, players, community_cards) -> List[Tuple[str, int, str]]:
         """

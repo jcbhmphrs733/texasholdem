@@ -62,21 +62,21 @@ class Mirage(ParentBot):
         
         # Aggressive hand recognition
         if self._has_flush(all_cards):
-            return (100, "Flush (aggressive)")
+            return (100, "Flush")
         elif self._has_straight(all_cards):
-            return (150, "Straight (aggressive)")
+            return (150, "Straight")
         elif self._has_trips(all_cards):
-            return (300, "Three of a kind (aggressive)")
+            return (300, "Three of a kind")
         elif self._has_two_pair(all_cards):
-            return (600, "Two pair (aggressive)")
+            return (600, "Two pair")
         elif self._has_pair(all_cards):
-            return (1200, "One pair (aggressive)")
+            return (1200, "One pair")
         elif self._has_flush_draw(all_cards):
-            return (1000, "Flush draw (betting it)")
+            return (1000, "Flush draw")
         elif self._has_straight_draw(all_cards):
-            return (1100, "Straight draw (betting it)")
+            return (1100, "Straight draw")
         else:
-            return (2500, "High card (bluff potential)")
+            return (2500, "High card")
 
     def _has_pair(self, cards):
         """Check for any pair."""

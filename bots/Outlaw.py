@@ -45,23 +45,18 @@ class Outlaw(ParentBot):
         
         # Wild evaluation - loves low cards and gapped hands
         if card1_rank == card2_rank:
-            if card1_rank <= 6:  # Low pairs are "cool"
+            if card1_rank >= 6: 
                 base_strength = (7 - card1_rank) * 150
             else:
-                base_strength = card1_rank * 50  # High pairs are "boring"
+                base_strength = card1_rank * 50 
         elif card1_suit == card2_suit:
-            # Loves suited gaps
             gap = abs(card1_rank - card2_rank)
-            if gap >= 3:
-                base_strength = gap * 50  # Big gaps are exciting
+            if gap <= 3:
+                base_strength = gap * 50 
             else:
                 base_strength = (card1_rank + card2_rank) * 8
         else:
-            # Weird offsuit combinations
-            if min(card1_rank, card2_rank) <= 4:  # Low cards
-                base_strength = 100 + (card1_rank + card2_rank) * 5
-            else:
-                base_strength = (card1_rank + card2_rank) * 3
+            base_strength = (card1_rank + card2_rank) * 3
         
         max_possible = 6 * 150
         strength = max_possible - base_strength
@@ -81,22 +76,22 @@ class Outlaw(ParentBot):
         wild_factor = random.uniform(0.5, 2.0)  # Random multiplier
         
         if self._has_flush(all_cards):
-            return (int(200 * wild_factor), "Flush (wild confidence)")
+            return (int(200 * wild_factor), "Flush")
         elif self._has_straight(all_cards):
-            return (int(250 * wild_factor), "Straight (wild confidence)")
+            return (int(250 * wild_factor), "Straight")
         elif self._has_trips(all_cards):
-            return (int(400 * wild_factor), "Three of a kind (wild)")
+            return (int(400 * wild_factor), "Three of a kind")
         elif self._has_two_pair(all_cards):
-            return (int(800 * wild_factor), "Two pair (wild)")
+            return (int(800 * wild_factor), "Two pair")
         elif self._has_pair(all_cards):
             # Outlaw values low pairs highly
             lowest_rank = min(Card.get_rank_int(card) for card in self.hand)
             if lowest_rank <= 4:
-                return (int(600 * wild_factor), "Low pair (outlaw special)")
+                return (int(600 * wild_factor), "One pair")
             else:
-                return (int(1400 * wild_factor), "High pair (boring)")
+                return (int(1400 * wild_factor), "One pair")
         elif self._has_nothing_special(all_cards):
-            return (int(1800 * wild_factor), "Chaos hand (bluff time)")
+            return (int(1800 * wild_factor), "Chaos hand")
         else:
             return (int(3000 * wild_factor), "Mystery hand")
 

@@ -4,7 +4,6 @@ from bots.Mirage import Mirage
 from bots.Coyote import Coyote
 from game_engine import PokerGameEngine
 from display import GameDisplay
-from utils import Utils
 import os
 
 def texas_holdem_sim():
@@ -33,21 +32,22 @@ def texas_holdem_sim():
             # 2. Community cards
             display.display_community(community_cards, "Community")
             
-            # 3. Bot subjective hand rankings and win percentages
+            # 3. Subjective bot hand rankings
             subjective_rankings = game_engine.get_subjective_evaluations(players, community_cards)
             display.display_hand_rankings(subjective_rankings, "Bot Subjective Hand Rankings")
-            
-            subjective_percentages = game_engine.get_subjective_percentages(players, community_cards)
-            display.display_winning_percentages(subjective_percentages, "Bot Subjective Win Chances")
             
             # 4. Objective treys rankings
             if community_cards:
                 objective_rankings = game_engine.evaluate_with_community(players, community_cards)
             else:
-                objective_rankings = game_engine.evaluate_preflop(players)
+                objective_rankings = game_engine.get_subjective_evaluations(players, community_cards)
             display.display_hand_rankings(objective_rankings, "Objective Hand Rankings (Treys)")
             
-            # 5. Monte Carlo win percentages
+            # 5. Subjective bot win percentages
+            subjective_percentages = game_engine.get_subjective_percentages(players, community_cards)
+            display.display_winning_percentages(subjective_percentages, "Bot Subjective Win Chances")
+            
+            # 6. Monte Carlo win percentages
             monte_carlo_percentages = game_engine.get_monte_carlo_percentage(players, community_cards)
             display.display_winning_percentages(monte_carlo_percentages, "Monte Carlo Win Percentages")
 

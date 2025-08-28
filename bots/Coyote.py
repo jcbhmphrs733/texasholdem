@@ -60,17 +60,17 @@ class Coyote(ParentBot):
         # Simple hand recognition - conservative bias
         if self._has_pair(all_cards):
             if self._has_trips(all_cards):
-                return (200, "Three of a kind (conservative)")
+                return (200, "Three of a kind")
             elif self._has_two_pair(all_cards):
-                return (800, "Two pair (conservative)")
+                return (800, "Two pair")
             else:
-                return (1500, "One pair (conservative)")
+                return (1500, "One pair")
         elif self._has_straight_draw(all_cards):
-            return (3000, "Straight draw (too risky)")
+            return (3000, "Straight draw")
         elif self._has_flush_draw(all_cards):
-            return (2800, "Flush draw (too risky)")
+            return (2800, "Flush draw")
         else:
-            return (4000, "High card (fold)")
+            return (4000, "High card")
 
     def _has_pair(self, cards):
         """Check for any pair."""
