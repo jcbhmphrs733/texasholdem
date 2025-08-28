@@ -9,9 +9,9 @@ class Outlaw(ParentBot):
         import random
         return random.choice(["call", "raise", "fold"])
 
-    def evaluate_preflop(self) -> tuple:
+    def evaluate_hand(self, community) -> tuple:
         """
-        Outlaw's unpredictable preflop evaluation.
+        Outlaw's unpredictable hand evaluation.
         Randomly adjusts hand values to simulate unpredictable play.
         """
         from treys import Card

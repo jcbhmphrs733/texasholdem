@@ -8,9 +8,9 @@ class Mirage(ParentBot):
         # Mirage plays aggressively
         return "raise" if pot < 200 else "call"
 
-    def evaluate_preflop(self) -> tuple:
+    def evaluate_hand(self, community) -> tuple:
         """
-        Mirage's aggressive preflop evaluation.
+        Mirage's aggressive hand evaluation.
         Values suited connectors and big cards highly.
         """
         from treys import Card

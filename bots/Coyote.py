@@ -10,9 +10,9 @@ class Coyote(ParentBot):
             return "fold"
         return "call"
 
-    def evaluate_preflop(self) -> tuple:
+    def evaluate_hand(self, community) -> tuple:
         """
-        Coyote's conservative preflop evaluation.
+        Coyote's conservative hand evaluation.
         Heavily penalizes weak hands and favors strong pairs.
         """
         from treys import Card

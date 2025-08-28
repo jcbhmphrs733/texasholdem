@@ -58,7 +58,6 @@ class PokerGameEngine:
     def get_winning_percentage(self, players, community_cards, simulations=1000) -> Dict[str, float]:
         """
         Calculate subjective win percentages based on each bot's own hand evaluation.
-        Uses each player's confidence in their hand rather than objective simulation.
         Percentages may not sum to 100% as they reflect individual bot psychology.
         """
         percentages = {}
