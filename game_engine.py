@@ -11,19 +11,17 @@ class PokerGameEngine:
     
     def evaluate_preflop(self, players) -> List[Tuple[str, int, str]]:
         """
-        Evaluate hole cards strength for all players.
+        Evaluate hole cards strength for all players using each bot's own evaluation.
         Returns list of (player_name, hand_strength, hand_description) sorted by strength.
         """
         player_strengths = []
         
         for player in players:
-            # For preflop, we can use a simple high card evaluation
-            # or implement preflop hand rankings
-            strength = self._evaluate_hole_cards(player.hand)
-            description = self._describe_hole_cards(player.hand)
+            # Use each player's own preflop evaluation method
+            strength, description = player.evaluate_preflop()
             player_strengths.append((player.name, strength, description))
         
-        # Sort by strength (lower score = better hand in treys)
+        # Sort by strength (lower score = better hand in treys convention)
         return sorted(player_strengths, key=lambda x: x[1])
     
     def evaluate_with_community(self, players, community_cards) -> List[Tuple[str, int, str]]:
@@ -57,97 +55,60 @@ class PokerGameEngine:
         """Evaluate final hands after the river (5 community cards)."""
         return self.evaluate_with_community(players, community_cards)
     
-    def _evaluate_hole_cards(self, hole_cards) -> int:
-        """
-        Simple preflop evaluation that matches treys' convention (lower = better).
-        """
-        # Simple high card evaluation for preflop
-        card1_rank = Card.get_rank_int(hole_cards[0])
-        card2_rank = Card.get_rank_int(hole_cards[1])
-        
-        # Calculate base strength (higher = stronger)
-        if card1_rank == card2_rank:
-            base_strength = card1_rank * 100  # Pairs get big bonus
-        elif Card.get_suit_int(hole_cards[0]) == Card.get_suit_int(hole_cards[1]):
-            base_strength = (card1_rank + card2_rank) * 10  # Suited gets bonus
-        else:
-            base_strength = card1_rank + card2_rank  # Regular high card
-        
-        # Invert to match treys convention (lower = better)
-        # Use a large number minus the strength so better hands get lower scores
-        max_possible = 12 * 100  # Pocket Aces would be 12 * 100 = 1200
-        return max_possible - base_strength
-    
-    def _describe_hole_cards(self, hole_cards) -> str:
-        """Describe hole cards for preflop analysis."""
-        card1_rank = Card.get_rank_int(hole_cards[0])
-        card2_rank = Card.get_rank_int(hole_cards[1])
-        card1_suit = Card.get_suit_int(hole_cards[0])
-        card2_suit = Card.get_suit_int(hole_cards[1])
-        
-        if card1_rank == card2_rank:
-            rank_str = Card.STR_RANKS[card1_rank]
-            return f"Pocket {rank_str}s"
-        
-        suited = "suited" if card1_suit == card2_suit else "offsuit"
-        high_rank = Card.STR_RANKS[max(card1_rank, card2_rank)]
-        low_rank = Card.STR_RANKS[min(card1_rank, card2_rank)]
-        
-        return f"{high_rank}{low_rank} {suited}"
-    
     def get_winning_percentage(self, players, community_cards, simulations=1000) -> Dict[str, float]:
         """
-        Calculate win percentages using Monte Carlo simulation.
-        Simulates unknown cards and counts wins for each player.
-        Percentages will sum to 100%.
+        Calculate subjective win percentages based on each bot's own hand evaluation.
+        Uses each player's confidence in their hand rather than objective simulation.
+        Percentages may not sum to 100% as they reflect individual bot psychology.
         """
-        from treys import Deck
-        import random
-        
-        # Get all known cards to exclude from simulation
-        known_cards = set()
-        for player in players:
-            known_cards.update(player.hand)
-        known_cards.update(community_cards)
-        
-        # Create deck with only unknown cards
-        full_deck = Deck()
-        unknown_cards = [card for card in full_deck.cards if card not in known_cards]
-        
-        # How many more community cards do we need?
-        cards_needed = 5 - len(community_cards)
-        
-        wins = {player.name: 0 for player in players}
-        ties = 0
-        
-        for _ in range(simulations):
-            # Shuffle unknown cards and complete the board
-            random.shuffle(unknown_cards)
-            simulated_community = community_cards + unknown_cards[:cards_needed]
-            
-            # Evaluate all hands
-            hand_scores = []
-            for player in players:
-                score = self.evaluator.evaluate(player.hand, simulated_community)
-                hand_scores.append((player.name, score))
-            
-            # Find winner(s) - lower score is better in treys
-            best_score = min(hand_scores, key=lambda x: x[1])[1]
-            winners = [name for name, score in hand_scores if score == best_score]
-            
-            if len(winners) == 1:
-                wins[winners[0]] += 1
-            else:
-                # Handle ties by giving fractional wins
-                tie_value = 1.0 / len(winners)
-                for winner in winners:
-                    wins[winner] += tie_value
-        
-        # Convert to percentages
         percentages = {}
-        for player_name, win_count in wins.items():
-            percentage = (win_count / simulations) * 100
-            percentages[player_name] = round(percentage, 1)
+        
+        if len(community_cards) == 0:
+            # Preflop: Use each bot's preflop evaluation
+            for player in players:
+                strength, _ = player.evaluate_preflop()
+                # Convert strength to percentage (lower strength = higher confidence)
+                # Scale from 0-100% based on strength relative to possible range
+                max_strength = 1800  # Worst possible hand strength
+                min_strength = 0     # Best possible hand strength
+                
+                # Normalize to 0-100 range, then invert (lower strength = higher %)
+                normalized = (max_strength - strength) / max_strength
+                percentage = max(5, min(95, normalized * 100))  # Keep between 5-95%
+                percentages[player.name] = round(percentage, 1)
+        
+        else:
+            # Post-flop: Use actual hand evaluation with subjective adjustment
+            for player in players:
+                # Get objective hand strength
+                hand_rank = self.evaluator.evaluate(player.hand, community_cards)
+                
+                # Apply subjective multiplier based on bot's preflop confidence
+                preflop_strength, _ = player.evaluate_preflop()
+                
+                # Calculate confidence multiplier (how optimistic/pessimistic each bot is)
+                if hasattr(player, 'name'):
+                    if player.name == "Coyote":
+                        confidence_multiplier = 0.8  # Conservative, underestimates chances
+                    elif player.name == "Mirage":
+                        confidence_multiplier = 1.3  # Aggressive, overestimates chances
+                    elif player.name == "Outlaw":
+                        import random
+                        confidence_multiplier = random.uniform(0.5, 1.8)  # Unpredictable
+                    else:
+                        confidence_multiplier = 1.0  # Neutral
+                else:
+                    confidence_multiplier = 1.0
+                
+                # Convert hand rank to percentage (7462 is worst possible)
+                base_percentage = ((7462 - hand_rank) / 7462) * 100
+                
+                # Apply subjective adjustment
+                subjective_percentage = base_percentage * confidence_multiplier
+                
+                # Keep in reasonable bounds
+                percentage = max(1, min(99, subjective_percentage))
+                percentages[player.name] = round(percentage, 1)
         
         return percentages
     
