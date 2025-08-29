@@ -78,23 +78,38 @@ class GameDisplay:
     """
     
     @staticmethod
-    def display_hands(players):
-        """Display player hole cards in a formatted table."""
+    def display_hands(players, dealer_position=0):
+        """Display player hole cards and stacks with position indicators."""
         table = Table(
             show_header=True,
             header_style="bold magenta",
             border_style="bright_blue",
-            min_width=40,
+            min_width=50,
             expand=False
         )
         
-        table.add_column("Player", style="cyan", no_wrap=True, justify="left", min_width=10)
-        table.add_column("Cards", style="white", justify="left", min_width=15, no_wrap=True)
+        table.add_column("Player", style="cyan", no_wrap=True, justify="left", min_width=16)
+        table.add_column("Stack", style="green", justify="right", min_width=8)
+        table.add_column("Cards", style="white", justify="left", min_width=20, no_wrap=True)
         
-        for player in players:
-            # Back to using the original treys card display
+        num_players = len(players)
+        small_blind_pos = (dealer_position + 1) % num_players
+        big_blind_pos = (dealer_position + 2) % num_players
+        
+        for i, player in enumerate(players):
+            # Add position indicators
+            player_name = player.name
+            if i == dealer_position:
+                player_name += " [D]"
+            elif i == small_blind_pos:
+                player_name += " [SB]"
+            elif i == big_blind_pos:
+                player_name += " [BB]"
+            
+            # Format cards and stack
             cards_str = " ".join([Card.int_to_pretty_str(c) for c in player.hand])
-            table.add_row(player.name, cards_str)
+            stack_str = f"${player.chips:,}"
+            table.add_row(player_name, stack_str, cards_str)
         
         console.print(table)
     
@@ -216,3 +231,28 @@ class GameDisplay:
         winner_table.add_row(f"{winner[0]} wins with {winner[2]}")
         
         console.print(winner_table)
+    
+    @staticmethod
+    def display_actions(action_history, title="Player Actions"):
+        """Display player actions in a formatted table."""
+        if not action_history:
+            return
+            
+        table = Table(
+            show_header=True,
+            header_style="bold yellow",
+            border_style="bright_cyan",
+            min_width=40,
+            expand=False
+        )
+        
+        table.add_column("Player", style="cyan", no_wrap=True, justify="left", min_width=12)
+        table.add_column("Action", style="white", justify="center", min_width=10)
+        table.add_column("Amount", style="green", justify="right", min_width=8)
+        
+        for action in action_history:
+            amount_str = f"${action['amount']}" if action['amount'] > 0 else "-"
+            table.add_row(action['player'], action['action'], amount_str)
+        
+        console.print(f"\n[bold yellow]{title}[/bold yellow]")
+        console.print(table)
