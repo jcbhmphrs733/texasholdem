@@ -4,18 +4,14 @@ import random
 class Player:
     def __init__(self, name):
         self.name = name
-        self.chips = 1000
-        self.current_bet = 0
-        self.hand = []
         self.folded = False
 
     def make_decision(self, game_state):
         # Simplified decision-making process
-        action_history = game_state.get('action_history', [])
         if game_state.get('bet_holder'):
-            return random.choice(["fold", "call", "call and raise"])
+            return random.choice(["fold", "call", "call", "call", "call", "call and raise"])
         else:
-            return random.choice(["fold", "check", "raise"])
+            return random.choice(["fold", "check", "check", "check", "raise"])
 
 
 players = [Player(name='alice'), Player(name='bob'), Player(name='craig'),  Player(name='dave')]
