@@ -1,35 +1,7 @@
-import random
-
-class GameState:
-    def __init__(self, players):
-        self.players = players
-        self.dealer_index = 0
-        self.bet_holder = None  # Tracks last raiser
-        self.stage = "pre-flop"
-        self.stages = ["pre-flop", "flop", "turn", "river"]
-        self.active_players = [p for p in players]
-
-    def reset_for_stage(self, stage):
-        self.stage = stage
-        self.bet_holder = None
-        print(f"\n=== Starting {stage.upper()} ===")
-        self.debug_active_players()
-
-    def debug_active_players(self):
-        active = [p.name for p in self.active_players if not p.folded]
-        print(f"Active Players: {active}")
-
-class Player:
-    def __init__(self, name):
-        self.name = name
-        self.folded = False
-
-    def make_decision(self, game_state):
-        # Updated decision-making process
-        if game_state.bet_holder:
-            return random.choice(["fold", "call", "call", "call", "call", "call and raise"])
-        else:
-            return random.choice(["fold", "check", "check", "check", "raise"])
+from game_state import GameState
+from treys import Evaluator, Card
+from typing import List, Tuple, Dict, Any
+from bots.Coyote import Coyote
 
 def run_betting_round(game_state):
     players = game_state.players
@@ -127,5 +99,5 @@ def play_hand(players):
     print("\n=== Hand complete ===")
 
 # Example usage
-players = [Player("Alice"), Player("Bob"), Player("Charlie"), Player("David"), Player("Erika")]
+players = [Coyote("Alice"), Coyote("Bob"), Coyote("Charlie"), Coyote("David"), Coyote("Erika")]
 play_hand(players)
