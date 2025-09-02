@@ -84,7 +84,7 @@ The `game_state` object (from `game_state.py`) is passed to each bot's `make_dec
 ## Contributing
 - Fork the repository and create a new branch for your bot or feature.
 - Add new bots to the `bots/` directory, inheriting from `ParentBot`.
-- Update the player list in `main.py` to include your bot for testing.
+-- Update the player list in `main.py` to include your bot for play or testing.
 - Write clear, concise docstrings for all new methods and classes.
 - Submit a pull request with a description of your changes.
 
