@@ -8,13 +8,14 @@ class PokerGameEngine:
     
     def __init__(self):
         self.evaluator = Evaluator()
+        self.round = 0 
         self.pot = 0
         self.current_bet = 0
         self.active_players = []  # Players still in the hand
         self.folded_players = []  # Players who have folded
         self.dealer_position = 0  # Index of dealer button
-        self.small_blind = 5
-        self.big_blind = 10
+        self.small_blind = 10
+        self.big_blind = 20
         self.min_raise = 20
 
     def start_new_hand(self, players):
@@ -24,13 +25,7 @@ class PokerGameEngine:
         self.current_bet = 0
         self.active_players = players.copy()
         self.folded_players = []
-        
-        # Initialize player chips only if they don't have any (first hand)
-        # for player in players:
-        #     if not hasattr(player, 'chips') or player.chips is None:
-        #         player.chips = 1000
-        #     player.current_bet = 0
-            
+
         # Rotate dealer button
         num_players = len(players)
         dealer = players[self.dealer_position]
