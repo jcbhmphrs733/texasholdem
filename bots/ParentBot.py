@@ -38,20 +38,6 @@ class ParentBot(ABC):
         """
         pass
 
-    @abstractmethod  
-    def observe(self, game_state: Dict[str, Any]) -> None:
-        """
-        Called after each action to let bot learn/adapt.
-        
-        Args:
-            game_state: Same structure as make_decision, but includes
-                       the action that just happened and its results.
-        
-        Simple bots can ignore this (just use 'pass').
-        Advanced bots can track opponent patterns, betting history, etc.
-        """
-        pass
-
     # ===== HELPER FUNCTIONS FOR PARTICIPANTS =====
     # These are optional utilities to help guide bot development
 

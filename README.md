@@ -30,12 +30,11 @@ texasholdem/
 ### ParentBot (Abstract Base Class)
 Located in `bots/ParentBot.py`.
 
+
 #### Key Methods:
 - `make_decision(game_state) -> str`
   - **Purpose**: Given the current game state, return the action to take.
   - **Return**: One of: `'fold'`, `'call'`, `'check'`, `'raise'`, `'call and raise'`
-- `observe(game_state) -> None`
-  - **Purpose**: Observe the latest action and update internal state if needed.
 - `receive_cards(cards: List[int]) -> None`
   - **Purpose**: Receive hole cards at the start of a hand.
 
@@ -45,6 +44,7 @@ Located in `bots/ParentBot.py`.
 - `hand: List[int]` — Current hole cards (treys format).
 - `folded: bool` — Whether the player has folded this hand.
 - `current_bet: int` — Amount currently bet this round.
+
 
 #### Abstract Methods:
 - `make_decision(game_state)` — Must be implemented by all bots.
@@ -77,7 +77,6 @@ The `game_state` object (from `game_state.py`) is passed to each bot's `make_dec
 ## Tips for Creating Bots
 - Always return a valid action string: `'fold'`, `'call'`, `'check'`, `'raise'`, or `'call and raise'`.
 - Use the `game_state` object to access all relevant information about the hand, stage, and opponents.
-- Implement the `observe` method if your bot needs to track opponent actions.
 - Use the `receive_cards` method to store your hole cards at the start of each hand.
 - Avoid using global state; keep all bot logic self-contained.
 
