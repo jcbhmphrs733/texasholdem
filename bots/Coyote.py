@@ -39,24 +39,30 @@ class Coyote(ParentBot):
 
             # Score: high cards, small gap, pair, suited
             score = high_card * 2 + (12 - gap) + (10 if pair else 0) + (2 if suited else 0)
-            # Penalize low cards
             if low_card < 5:
                 score -= 4
 
-            # Risk management: don't risk more than 30% of stack pre-flop
             risk_limit = 0.3 * self.chips
             if to_call > risk_limit:
-                return "fold"
+                return ("fold", 0)
 
             # Aggressive with high score
             if score >= 22:
-                return "raise" if to_call == 0 else "call and raise"
+                # Dynamic raise: 40% of stack or min_raise, whichever is higher
+                raise_amt = max(int(0.4 * self.chips), min_raise)
+                if to_call == 0:
+                    return ("raise", raise_amt)
+                else:
+                    return ("call", to_call)
             elif score >= 18:
-                return "call" if to_call > 0 else "check"
+                if to_call > 0:
+                    return ("call", to_call)
+                else:
+                    return ("check", 0)
             elif to_call == 0:
-                return "check"
+                return ("check", 0)
             else:
-                return "fold"
+                return ("fold", 0)
 
         # --- Post-flop: simple hand evaluation without treys Evaluator ---
         all_cards = hole + community
@@ -69,7 +75,6 @@ class Coyote(ParentBot):
             is_trips = len(unique_ranks) == 3 and max(ranks.count(r) for r in unique_ranks) == 3
             is_straight = max(ranks) - min(ranks) == 4 and len(unique_ranks) == 5
             is_flush = len(set(Card.get_suit_int(c) for c in combo)) == 1
-            # Score: flush > straight > trips > two pair > pair > high card
             score = 0
             if is_flush and is_straight:
                 score = 100
@@ -88,21 +93,30 @@ class Coyote(ParentBot):
             if score > best_score:
                 best_score = score
 
-        # Risk management: don't risk more than 40% of stack post-flop
         risk_limit = 0.4 * self.chips
         if to_call > risk_limit:
-            return "fold"
+            return ("fold", 0)
 
-        # Aggressive with strong hand, but call if risk is high
         if best_score >= 90:
             if to_call > 0.25 * self.chips:
-                return "call"
-            return "raise" if to_call == 0 else "call and raise"
+                return ("call", to_call)
+            # Dynamic raise: 50% of stack or min_raise, whichever is higher
+            raise_amt = max(int(0.5 * self.chips), min_raise)
+            if to_call == 0:
+                return ("raise", raise_amt)
+            else:
+                return ("call", to_call)
         elif best_score >= 70:
-            return "call" if to_call > 0 else "check"
+            if to_call > 0:
+                return ("call", to_call)
+            else:
+                return ("check", 0)
         elif best_score >= 50:
-            return "call" if to_call > 0 else "check"
+            if to_call > 0:
+                return ("call", to_call)
+            else:
+                return ("check", 0)
         elif to_call == 0:
-            return "check"
+            return ("check", 0)
         else:
-            return "fold"
+            return ("fold", 0)
