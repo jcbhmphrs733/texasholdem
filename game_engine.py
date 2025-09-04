@@ -45,7 +45,93 @@ def run_betting_round(game_state):
         game_state.pot += bb_amt
         game_state.current_bet = bb_amt
 
-   
+        # Pre-flop first acting player
+        if len([p for p in players if not p.folded]) == 2:
+            current_index = small_blind_index
+        else:
+            current_index = (big_blind_index + 1) % num_players
+    else:
+        # Reset current_bet for all players for new stage
+        for p in players:
+            p.current_bet = 0
+        game_state.current_bet = 0
+        current_index = small_blind_index
+        game_state.bet_holder = None  # No active raise yet
+
+    acted_players = set()
+    stage_over = False
+
+    while not stage_over:
+        player = players[current_index]
+
+        if player.folded:
+            current_index = (current_index + 1) % num_players
+            continue
+
+        # End hand if only one player remains
+        active_players = [p for p in players if not p.folded]
+        if len(active_players) == 1:
+            winner = active_players[0]
+            print(f"\n{winner.name} wins the hand! Everyone else folded.")
+            # Award pot to winner
+            winner.chips += game_state.pot
+            print(f"{winner.name} wins the pot of {game_state.pot} chips!")
+            game_state.pot = 0
+            return True
+
+        # Calculate amount to call
+        to_call = game_state.current_bet - player.current_bet
+        min_raise = game_state.min_raise
+
+        # Player decision
+        action, amount = player.make_decision(game_state)
+        print(f"{player.name} decides to {action.upper()}.")
+
+        if action == "fold":
+            player.folded = True
+            acted_players.add(player)
+        elif action == "call":
+            # Player matches current bet
+            call_amt = amount
+            if call_amt > 0:
+                player.chips -= call_amt
+                player.current_bet += call_amt
+                game_state.pot += call_amt
+            print(f"{player.name} CALLS for {call_amt} chips.")
+        elif action == "raise":
+            raise_amt = amount
+            to_call = game_state.current_bet - player.current_bet
+            total_amt = to_call + raise_amt
+            player.chips -= total_amt
+            player.current_bet += total_amt
+            game_state.pot += total_amt
+            game_state.current_bet = player.current_bet
+            print(f"{player.name} RAISES to {player.current_bet} chips.")
+        elif action == "check":
+            print(f"{player.name} checks.")
+            acted_players.add(player)
+        elif action in ["raise", "call and raise"]:
+            # Player must call, then raise
+            to_call = game_state.current_bet - player.current_bet
+            raise_amt = min_raise
+            total_amt = to_call + raise_amt
+            player.chips -= total_amt
+            player.current_bet += total_amt
+            game_state.pot += total_amt
+            game_state.current_bet = player.current_bet
+            print(f"--- {player.name} RAISES --- for total {total_amt} chips (call {to_call} + raise {raise_amt})")
+            game_state.bet_holder = player
+            # Reset acted_players; only raiser has acted so far
+            acted_players = {player}
+
+        # Advance turn
+        current_index = (current_index + 1) % num_players
+
+        # Stage ends if all active players except bet_holder have acted
+        active_players = [p for p in players if not p.folded]
+        if all(p in acted_players or p == game_state.bet_holder for p in active_players):
+            stage_over = True
+
     print(f"=== {stage.upper()} betting round is over ===")
     return False
 
@@ -97,15 +183,10 @@ def play_hand(players, dealer_index):
 
         # After eliminations, update dealer_index to next player after previous dealer
         if players and prev_dealer_name:
-            # Find the index of the previous dealer (if still present)
             idx = next((i for i, p in enumerate(players) if p.name == prev_dealer_name), None)
             if idx is not None:
-                # Dealer survived, move to previous player (reverse direction)
                 dealer_index = (idx - 1) % len(players)
             else:
-                # Dealer was eliminated, find the player who was next after the dealer in the old list
-                # (i.e., the first player after the old dealer who is still in the list)
-                # For robustness, just rotate to the next available player
                 dealer_index = 0
             game_state.dealer_index = dealer_index
 
@@ -114,9 +195,11 @@ def play_hand(players, dealer_index):
         for p in players:
             print(f"{p.name}: {p.chips}")
         GameDisplay.wait_for_user("Press Enter to continue to the next stage...")
-        if hand_over or len(players) <= 1:
-            break
 
+        # Prevent next stage if only one player remains
+        active_players = [p for p in players if not p.folded]
+        if hand_over or len(active_players) <= 1:
+            return dealer_index
 
     # === Showdown and hand evaluation ===
     active_players = [p for p in players if not p.folded]
@@ -139,12 +222,14 @@ def play_hand(players, dealer_index):
         GameDisplay.display_game_summary(
             [(p.name, r, d) for p, r, d in hand_ranks], community_cards
         )
-        print(f"\n[WIN] {win_names} win(s) the pot of {game_state.pot} chips with {win_desc}!")
+        print(
+            f"\n[WIN] {win_names} win(s) the pot of {game_state.pot} chips with {win_desc}!")
         game_state.pot = 0
     elif len(active_players) == 1:
         winner = active_players[0]
         winner.chips += game_state.pot
-        print(f"\n[WIN] {winner.name} wins the pot of {game_state.pot} chips! (everyone else folded)")
+        print(
+            f"\n[WIN] {winner.name} wins the pot of {game_state.pot} chips! (everyone else folded)")
         game_state.pot = 0
 
     # Pause before new hand
